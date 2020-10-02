@@ -1,13 +1,10 @@
 <template>
-  <div>
-    <!-- 根路由出口 -->
-    <router-view></router-view>
-  </div>
+  <div class="login-container">登录</div>
 </template>
 
 <script>
 export default {
-  name: "App",
+  name: "Login",
   data() {
     return {};
   },
