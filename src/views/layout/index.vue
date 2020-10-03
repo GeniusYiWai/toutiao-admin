@@ -1,6 +1,6 @@
 <template>
   <el-container class="layout-container">
-    <el-aside width="200px" class="aside">
+    <el-aside  class="aside" width="auto">
       <Aside class="aside-menu" :isCollapse="isCollapse"></Aside>
     </el-aside>
     <el-container>
@@ -41,7 +41,7 @@
 <script>
 import Aside from "./components/aside";
 import { getUserProfile } from "@/api/user";
-
+import { removeItem } from "@/utils/storage";
 export default {
   name: "Layout",
   components: { Aside },
@@ -74,8 +74,7 @@ export default {
       })
         .then(() => {
           // 把用户的登录状态清除
-          window.localStorage.removeItem("user");
-
+          removeItem("user");
           // 跳转到登录页面
           this.$router.push("/login");
         })

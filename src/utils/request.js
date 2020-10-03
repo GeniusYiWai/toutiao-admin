@@ -7,9 +7,6 @@ import {
 import router from '@/router/'
 // 在非组件模块中获取store 必须通过这种方式
 import store from '@/store/'
-const refreshToken = axios.create({
-    baseURL: "http://ttapi.research.itcast.cn/",
-})
 const request = axios.create({
     baseURL: "http://ttapi.research.itcast.cn/",
     // transformResponse 允许自定义原始的响应数据（字符串）
@@ -48,54 +45,7 @@ request.interceptors.response.use(function (response) {
     //响应成功进入这里
     return response
 }, async function (error) {
-    const status = error.response.status;
-    //客户端请求参数错误
-    if (status == 400) {
-        Message.fail('请求参数错误');
-    }
-    //token无效
-    if (status == 401) {
-        const {
-            user
-        } = store.state;
 
-        //如果没有user 或者 user.token 直接去登录
-        if (!user || !user.token) {
-            //跳转到登录页
-            return refirectLogin()
-        }
-        //如果有refresh_token 请求获取新的token
-        try {
-            const {
-                data
-            } = await refreshToken({
-                method: 'PUT',
-                url: '/app/v1_0/authorizations',
-                headers: {
-                    Authorization: `Bearer ${user.refresh_token}`
-                }
-            })
-            user.token = data.data.token
-            store.commit('setUser', user)
-            //error.config是本次请求的相关配置信息对象
-            return request(error.config)
-        } catch (error) {
-            //刷新token 失败
-            refirectLogin()
-        }
-
-        //把新的token更新到容器
-        //把失败的请求重新发出去
-    }
-    //没有权限
-    else if (status == 403) {
-        Message.fail('没有权限');
-    }
-    //服务端异常
-    else if (status >= 500) {
-        Message.fail('服务器错误');
-
-    }
     //任何超过2xx的响应码都会进入这里
     return Promise.reject(error)
 })
