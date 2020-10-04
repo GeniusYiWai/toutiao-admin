@@ -12,7 +12,7 @@
       <!-- 筛选表单 -->
       <el-form ref="form" :model="form" label-width="40px" size="small">
         <el-form-item label="特殊资源">
-          <el-radio-group v-model="form.resource">
+          <el-radio-group v-model="status">
             <el-radio :label="null">全部</el-radio>
             <el-radio :label="0">草稿</el-radio>
             <el-radio :label="1">待审核</el-radio>
@@ -48,7 +48,9 @@
 
     <!-- 查询结果 -->
     <el-card class="box-card">
-      <div slot="header" class="clearfix">根据筛选条件共查询到 100条结果：</div>
+      <div slot="header" class="clearfix">
+        根据筛选条件共查询到{{ totalCount }}条结果：
+      </div>
       <!-- 表格 -->
       <el-table
         :data="articles"
@@ -60,30 +62,26 @@
       >
         <el-table-column label="封面">
           <template slot-scope="scope">
-            <el-image
-              style="width: 50px; height: 50px"
+            <img
+              v-if="scope.row.cover.images[0]"
               :src="scope.row.cover.images[0]"
-              fit="cover"
-              lazy
-            >
-              <div slot="placeholder" class="image-slot">
-                加载中<span class="dot">...</span>
-              </div>
-            </el-image>
+              style="width: 50px; height: 50px"
+            />
+
+            <img
+              v-else
+              src="./no-cover.gif"
+              style="width: 50px; height: 50px"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="title" label="标题"> </el-table-column>
         <el-table-column prop="status" label="状态">
           <!-- 如果需要在自定义列模板中获取当前遍历项数据，那么就在 template 上声明 slot-scope="scope" -->
           <template slot-scope="scope">
-            <el-tag :type="articleStatus[scope.row.status].type">{{
+            <el-tag :type="[scope.row.status].type">{{
               articleStatus[scope.row.status].text
             }}</el-tag>
-            <!-- <el-tag v-if="scope.row.status === 0" type="warning">草稿</el-tag>
-            <el-tag v-else-if="scope.row.status === 1">待审核</el-tag>
-            <el-tag v-else-if="scope.row.status === 2" type="success">审核通过</el-tag>
-            <el-tag v-else-if="scope.row.status === 3" type="danger">审核失败</el-tag>
-            <el-tag v-else-if="scope.row.status === 4" type="info">已删除</el-tag> -->
           </template></el-table-column
         >
         <el-table-column prop="pubdate" label="发布时间"> </el-table-column>
@@ -107,7 +105,17 @@
       </el-table>
     </el-card>
     <!-- 分页 -->
-    <el-pagination background layout="prev, pager, next" :total="1000">
+    <!--  :total="totalCount" 自动计算 以10条每页默认计算
+    可以自定义page-size
+    total/page-size
+     -->
+    <el-pagination
+      background
+      layout="prev, pager, next"
+      :total="totalCount"
+      :page-size="pageSize"
+      @current-change="onCurrentChange"
+    >
     </el-pagination>
   </div>
 </template>
@@ -126,7 +134,6 @@ export default {
         date2: "",
         delivery: false,
         type: [],
-        resource: "",
         desc: "",
       },
 
@@ -139,6 +146,14 @@ export default {
         { status: 3, text: "审核失败", type: "warning" }, // 3
         { status: 4, text: "已删除", type: "danger" }, // 4
       ],
+      //总数据数量
+      totalCount: 0,
+      //当前页码
+      page: 1,
+      //每页展示数量
+      pageSize: 10,
+      //查询文章的状态 不传就是全部
+      status: null,
     };
   },
   computed: {},
@@ -148,12 +163,22 @@ export default {
   },
   mounted() {},
   methods: {
-    async loadArticles() {
-      const { data } = await getArticles();
-      this.articles = data.data.results;
+    async loadArticles(page = 1) {
+      const res = await getArticles({
+        page, //页码
+        per_page: this.pageSize, //每页大小
+        status: this.status, //查询文章的状态
+      });
+      //total_count: totalCount 重命名
+      const { results, total_count: totalCount } = res.data.data;
+      this.articles = results;
+      this.totalCount = totalCount;
     },
     onSubmit() {
       console.log("submit!");
+    },
+    onCurrentChange(page) {
+      this.loadArticles(page);
     },
   },
 };
