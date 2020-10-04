@@ -22,15 +22,21 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="频道">
-          <el-select v-model="form.region" placeholder="请选择频道">
-            <el-option label="全部" value="shanghai"></el-option>
+          <el-select v-model="channelId" placeholder="请选择频道">
+            <el-option label="全部" :value="null"></el-option>
+            <el-option
+              :label="channel.name"
+              :value="channel.id"
+              v-for="(channel, index) in channels"
+              :key="index"
+            ></el-option>
           </el-select>
         </el-form-item>
 
         <el-form-item label="日期">
           <el-col :span="11">
             <el-date-picker
-              v-model="form.date1"
+              v-model="rangeDate"
               type="datetimerange"
               start-placeholder="开始日期"
               end-placeholder="结束日期"
@@ -41,7 +47,13 @@
           </el-col>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSubmit">查询</el-button>
+          <!--
+            button 按钮的 click 事件有个默认参数
+            当你没有指定参数的时候，它会默认传递一个没用的数据
+           -->
+          <el-button type="primary" :disabled="loading" @click="loadArticles(1)"
+            >查询</el-button
+          >
         </el-form-item>
       </el-form>
     </el-card>
@@ -59,20 +71,20 @@
         border
         class="list-table"
         size="mini"
+        v-loading="loading"
       >
         <el-table-column label="封面">
           <template slot-scope="scope">
-            <img
-              v-if="scope.row.cover.images[0]"
+            <el-image
+              style="width: 100px; height: 100px"
               :src="scope.row.cover.images[0]"
-              style="width: 50px; height: 50px"
-            />
-
-            <img
-              v-else
-              src="./no-cover.gif"
-              style="width: 50px; height: 50px"
-            />
+              fit="cover"
+              lazy
+            >
+              <div slot="placeholder" class="image-slot">
+                加载中<span class="dot">...</span>
+              </div>
+            </el-image>
           </template>
         </el-table-column>
         <el-table-column prop="title" label="标题"> </el-table-column>
@@ -99,6 +111,7 @@
               type="danger"
               icon="el-icon-delete"
               circle
+              @click="onDeleteArticle(scope.row.id)"
             ></el-button>
           </template>
         </el-table-column>
@@ -114,6 +127,7 @@
       layout="prev, pager, next"
       :total="totalCount"
       :page-size="pageSize"
+      :disabled="loading"
       @current-change="onCurrentChange"
     >
     </el-pagination>
@@ -128,15 +142,10 @@ export default {
   data() {
     return {
       form: {
-        name: "",
-        region: "",
-        date1: "",
-        date2: "",
         delivery: false,
         type: [],
         desc: "",
       },
-
       //文章列表
       articles: [],
       articleStatus: [
@@ -154,31 +163,72 @@ export default {
       pageSize: 10,
       //查询文章的状态 不传就是全部
       status: null,
+      //文章频道
+      channels: [],
+      //查询文章的频道
+      channelId: null,
+      //范围日期
+      rangeDate: null,
+      loading: false,
     };
   },
   computed: {},
   watch: {},
   created() {
     this.loadArticles();
+    this.loadChannels();
   },
   mounted() {},
   methods: {
+    //加载文章
     async loadArticles(page = 1) {
+      this.loading = true;
       const res = await getArticles({
         page, //页码
         per_page: this.pageSize, //每页大小
         status: this.status, //查询文章的状态
+        channel_id: this.channelId, //查询文章的频道
+        begin_pubdate: this.rangeDate ? this.rangeDate[0] : null, // 开始日期
+        end_pubdate: this.rangeDate ? this.rangeDate[1] : null, // 截止日期
       });
       //total_count: totalCount 重命名
       const { results, total_count: totalCount } = res.data.data;
       this.articles = results;
       this.totalCount = totalCount;
+      this.loading = false;
     },
-    onSubmit() {
-      console.log("submit!");
+    //加载频道
+    async loadChannels() {
+      const res = await getArticleChannels();
+      this.channels = res.data.data.channels;
     },
     onCurrentChange(page) {
       this.loadArticles(page);
+    },
+    //删除文章
+    onDeleteArticle(articleId) {
+      this.$confirm("确认删除吗？", "删除提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          // 确认执行这里
+          deleteArticle(articleId.toString()).then((res) => {
+            // 删除成功，更新当前页的文章数据列表
+            this.$message({
+              message: "删除成功",
+              type: "success",
+            });
+            this.loadArticles(this.page);
+          });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除",
+          });
+        });
     },
   },
 };

@@ -10,7 +10,7 @@
       </el-form-item>
       <el-form-item prop="agree">
         <el-checkbox v-model="user.agree"
-          >我已阅读并同意用户协议和隐私条款0</el-checkbox
+          >我已阅读并同意用户协议和隐私条款</el-checkbox
         ></el-form-item
       >
 
