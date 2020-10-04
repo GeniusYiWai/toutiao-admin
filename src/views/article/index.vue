@@ -10,7 +10,7 @@
       </div>
 
       <!-- 筛选表单 -->
-      <el-form ref="form" :model="form" label-width="40px" size="small">
+      <el-form ref="form" label-width="40px" size="small">
         <el-form-item label="特殊资源">
           <el-radio-group v-model="status">
             <el-radio :label="null">全部</el-radio>
@@ -105,6 +105,7 @@
               circle
               icon="el-icon-edit"
               type="primary"
+              @click="$router.push(`/publish?id=${scope.row.id}`)"
             ></el-button>
             <el-button
               size="mini"
@@ -141,11 +142,6 @@ export default {
   components: {},
   data() {
     return {
-      form: {
-        delivery: false,
-        type: [],
-        desc: "",
-      },
       //文章列表
       articles: [],
       articleStatus: [

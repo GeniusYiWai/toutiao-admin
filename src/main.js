@@ -2,8 +2,13 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-
-
+import {
+  ElementTiptapPlugin
+} from 'element-tiptap';
+import 'element-tiptap/lib/index.css';
+Vue.use(ElementTiptapPlugin, {
+  lang: 'zh',
+});
 //加载全局样式
 import './styles/index.less'
 
