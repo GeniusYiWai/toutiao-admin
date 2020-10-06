@@ -1,6 +1,6 @@
 <template>
   <el-container class="layout-container">
-    <el-aside  class="aside" width="auto">
+    <el-aside class="aside" width="auto">
       <Aside class="aside-menu" :isCollapse="isCollapse"></Aside>
     </el-aside>
     <el-container>
@@ -42,6 +42,8 @@
 import Aside from "./components/aside";
 import { getUserProfile } from "@/api/user";
 import { removeItem } from "@/utils/storage";
+import bus from "@/utils/bus";
+
 export default {
   name: "Layout",
   components: { Aside },
@@ -57,6 +59,13 @@ export default {
   watch: {},
   created() {
     this.loadUserProfile();
+    bus.$on("update-user", (data) => {
+      if (data.name) {
+        this.user.name = data.name;
+      }
+      console.log(data);
+      this.user.photo = data.photo;
+    });
   },
   mounted() {},
   methods: {

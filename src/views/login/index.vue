@@ -103,6 +103,7 @@ export default {
             token: res.data.data.token,
           };
           setItem("user", user);
+          this.$store.commit("setUser", user);
           this.$router.push("/");
         })
         .catch((err) => {
